@@ -13,6 +13,7 @@ import argcomplete
 import orgparse as op
 
 
+
 def main():
     # Parse command-line arguments:
     parser = argparse.ArgumentParser(description="Copy my Orgmode tasks to Google Tasks, removing all existing Google tasks.", 
@@ -30,13 +31,18 @@ def main():
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
     
-    process_file(args.fileName, args.matchYear, args.verbose)  # ISSUE: multiple tags in Python set, variable order!!!
+    # Arguments -> global variables
+    global verbose, matchYear
+    verbose = args.verbose
+    matchYear = args.matchYear
+    
+    process_file(args.fileName)  # ISSUE: multiple tags in Python set, variable order!!!
     
     return
     
 
 
-def process_file(orgFile, matchYear, verbose):
+def process_file(orgFile):
     """Process Orgmode file with three levels of nodes.
     
     Args:
@@ -45,17 +51,24 @@ def process_file(orgFile, matchYear, verbose):
     """
     
     # Read input file:
-    org = op.load(orgFile)
+    try:
+        org = op.load(orgFile)
+    except Exception as e:
+        print('Error opening file '+str(e))
+        exit(1)
 
     # Generate names for output file and open them:
-    keepFileName = orgFile.replace(".org","")+"-cleaned.org"
+    keepFileName = orgFile.replace(".org","")+"-cleaned-"+str(matchYear)+".org"
     archFileName = orgFile.replace(".org","")+"-archive-"+str(matchYear)+".org"
+
+    global keepFile, archFile
     
     try:
         keepFile = open(keepFileName, mode='x')  # Open to write
     except Exception as e:
         print('Error opening file '+str(e))
         exit(1)
+        
     try:
         archFile = open(archFileName, mode='x')  # Open to write
     except Exception as e:
@@ -66,34 +79,44 @@ def process_file(orgFile, matchYear, verbose):
     print("all other entries will be kept in "+keepFileName)
     # exit()
     
+    # Create counters:
+    global cntSec, cntKeep, cntArch
+    cntSec = cntKeep = cntArch = 0
     
     # Walk through a maximum of five levels of nodes:
     for node1 in org.children:
-        process_headings(node1, matchYear, keepFile,archFile, verbose)
+        process_headings(node1)
         
         for node2 in node1.children:
-            process_headings(node2, matchYear, keepFile,archFile, verbose)
+            process_headings(node2)
             
             for node3 in node2.children:
-                process_headings(node3, matchYear, keepFile,archFile, verbose)
+                process_headings(node3)
                 
                 for node4 in node3.children:
-                    process_headings(node4, matchYear, keepFile,archFile, verbose)
+                    process_headings(node4)
                     
                     for node5 in node4.children:
-                        process_headings(node5, matchYear, keepFile,archFile, verbose)
+                        process_headings(node5)
 
 
     # Close output files:
     keepFile.close()
     archFile.close()
     
+    print("Sections found in "+orgFile+":   ", cntSec-cntArch-cntKeep)
+    print("Entries archived in "+archFileName+":  ", cntArch)
+    print("Entries kept in "+keepFileName+":  ", cntKeep)
+    
     return
 
 
 
-def process_headings(node, matchYear, keepFile,archFile, verbose):
+def process_headings(node):
     """Copy the Orgmode headings of a node to Google Tasks"""
+    
+    global cntSec, cntKeep, cntArch
+    cntSec += 1
     
     # Issue: empty headings are lost!
     if(len(node)>1):
@@ -123,11 +146,14 @@ def process_headings(node, matchYear, keepFile,archFile, verbose):
         if(not year):                       # No date present, keep this entry
             # print(head)
             keepFile.write(str(head)+"\n")
+            cntKeep += 1
         elif(year == matchYear):            # Date present, and matches: archive
             # print(head)
             archFile.write(str(head)+"\n")
+            cntArch += 1
         else:                               # Date present, but no match: keep
             keepFile.write(str(head)+"\n")
+            cntKeep += 1
             
     return
 
