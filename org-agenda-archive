@@ -11,7 +11,6 @@ import argcomplete
 
 # from orgparse import load, loads
 import orgparse as op
-import re              # Import the Regular Expressions module
 
 
 def main():
@@ -32,22 +31,22 @@ def main():
     # home = str(Path.home())
     
     # Process Email.org:
-    # process_3level_file(home+'/.org/Email.org', args.verbose)  
-    # process_3level_file(home+'/.org/HAN.org', args.verbose)  # ISSUE: multiple tags in Python set, variable order!!!
-    process_3level_file('HAN.org', args.verbose)  # ISSUE: multiple tags in Python set, variable order!!!
+    # process_file(home+'/.org/Email.org', args.verbose)  
+    # process_file(home+'/.org/HAN.org', args.verbose)  # ISSUE: multiple tags in Python set, variable order!!!
+    process_file('HAN.org', args.verbose)  # ISSUE: multiple tags in Python set, variable order!!!
     
     # Process Hack.org:
-    # process_2level_file(home+'/.org/Hack.org', args.verbose)
-    # process_2level_file(home+'/.org/Priv.org', args.verbose)
-    # process_2level_file(home+'/.org/RU.org', args.verbose)
-    # process_2level_file(home+'/.org/Sky.org', args.verbose)
-    # process_2level_file(home+'/.org/GitHub.org', args.verbose)
+    # process_file(home+'/.org/Hack.org', args.verbose)
+    # process_file(home+'/.org/Priv.org', args.verbose)
+    # process_file(home+'/.org/RU.org', args.verbose)
+    # process_file(home+'/.org/Sky.org', args.verbose)
+    # process_file(home+'/.org/GitHub.org', args.verbose)
     
     
     
 
 
-def process_3level_file(orgFile, verbose):
+def process_file(orgFile, verbose):
     """Process Orgmode file with three levels of nodes.
     
     Args:
@@ -57,117 +56,60 @@ def process_3level_file(orgFile, verbose):
     
     org = op.load(orgFile)
     
-    for iNode1 in range(len(org.children)):
-        node1 = org.children[iNode1]
-        if(verbose):
-            print()
-            print("Node 1: ", iNode1, node1, node1.heading)
-            print(node1.children)
-        print(node1)
+    for node1 in org.children:
+        process_headings(node1, verbose)
         
-        
-        for iNode2 in range(len(node1.children)):
-            node2 = node1.children[iNode2]
-            if(verbose):
-                print()
-                print("Node 2: ", node2)
-                print(node2.children)
-            print(node2)
-            
-            # Copy the Orgmode headings of a node to Google Tasks:
+        for node2 in node1.children:
             process_headings(node2, verbose)
             
-    return
-
-
-def process_2level_file(orgFile, verbose):
-    """Process an Orgmode Agenda file with two levels of nodes.
-    
-    Args:
-      orgFile (str):   Orgmode file name
-      verbose (bool):  verbosity flag (optional, default = False)
-    """
-    
-    org = op.load(orgFile)
-    
-    for iNode1 in range(len(org.children)):
-        node1 = org.children[iNode1]
-        if(verbose):
-            print()
-            print("Node 1: ", iNode1, node1, node1.heading)
-            print(node1.children)
-            
-        # Copy the Orgmode headings of a node to Google Tasks:
-        process_headings(node1, verbose)
-
+            for node3 in node2.children:
+                process_headings(node3, verbose)
+                
+                for node4 in node3.children:
+                    process_headings(node4, verbose)
+                    
+                    for node5 in node4.children:
+                        process_headings(node5, verbose)
+                    
     return
 
 
 
 def process_headings(node, verbose):
     """Copy the Orgmode headings of a node to Google Tasks"""
-    
-    # Trying to add OPEN as a todo keyword...
-    node.all_todo_keys = 'OPEN'
+
+    # Issue: empty headings are lost!
+    if(len(node)>1): print(node)
+    if(len(node) != len(node.children) + 1): return
     
     # Loop over headings in this node:
     for head in node.children:
         
-        print(head)
-        # print(head.children)
+        # if( (not head.scheduled) and (not head.closed) and (not head.clock) and (not head.deadline) ):
+        # has_date(): has .scheduled, .deadline, .datelist or .rangelist.
+        # if( (not head.has_date()) and (not head.closed) and (not head.clock) ):
+        #     print(head)
         
-        if(head.tags and False):
-            if(head.todo == 'DONE'): continue       # Skip
-            if(head.todo == 'CANCELED'): continue   # Skip
-            if(head.todo == 'ABORTED'): continue    # Skip
-            # print(head)
-            # print(head.heading)
+        year = None
+        if(head.datelist):
+            year = head.datelist[0].start.year
+        elif(head.rangelist):
+            year = head.rangelist[0].start.year
+        elif(head.scheduled):
+            year = head.scheduled.start.year
+        elif(head.deadline):
+            year = head.deadline.start.year
+        elif(head.closed):
+            year = head.closed.start.year
+        elif(head.clock):
+            year = head.clock[0].start.year
             
-            # if(head.todo is None): continue         # Clocked task, never TODO -> skip - TODO: catch OPEN
-            # Check https://github.com/karlicoss/orgparse/issues/18 for this!
-            if(not head.todo and not re.search("^WAITING", head.heading) 
-               and not re.search("^PROCESS", head.heading)
-               and not re.search("^OPEN", head.heading)): continue         # Clocked task, never TODO -> skip, except when ^WAITING/PROCESS/OPEN
-            # if(head.closed): continue  # TODO has a closed date, and is probably DONE -> skip
-
-            taskList = tuple(head.tags)[0]  # Note: tags is a Python Set: unordered.  When multiple tags are specified, there's no way to get the correct one!  Don't use this?
-            taskList = 'Tasks'  # CHECK - Cannot (always) create new lists with new_list() below...
-
-            # try:
-            #     gt.get_list(taskList)
-            # except Exception:
-            #     print("Creating task list "+taskList)
-            #     gt.new_list(title=taskList)  # CHECK - no longer (always) works!
+        if(not year):
+            print(head)
+        elif(year < 2021):
+            print(head)
             
-            title = "Unnamed task"
-            if(head.heading): title = head.heading
-            if(re.search("HAN", title)): continue
-            
-            dueDate = None
-            if(head.deadline): dueDate = head.deadline
-            notes = ""
-            if(head.body): notes = head.body
-            completionDate = None
-            if(head.closed): completionDate = head.closed
-            print(taskList, title, dueDate, completionDate, head.todo)
-            # gt.new_task(title=title, due_date=dueDate, notes=notes, task_list=taskList, completion_date=completionDate)
-            
-            
-            if(verbose):
-                if(head.heading):                  print('heading:   ', head.heading)
-                if(head.scheduled):                print('scheduled: ', head.scheduled)
-                if(head.closed):                   print('closed:    ', head.closed)
-                if(head.clock):                    print('clock:     ', head.clock)
-                if(head.deadline):                 print('deadline:  ', head.deadline)
-                if(head.tags):                     print('tags:      ', head.tags)
-                if(head.get_property('ACCOUNT')):  print('account:   ', head.get_property('ACCOUNT'))
-                if(head.get_property('FROM')):     print('from:      ', head.get_property('FROM'))
-                if(head.get_property('DATE')):     print('date:      ', head.get_property('DATE'))
-                if(head.body):                     print('body:      ', head.body)
-                if(notes):                         print('notes:     ', notes)
-
 
 # ### Main ###
-if __name__=="__main__":
-    main()
+if __name__=="__main__": main()
 
