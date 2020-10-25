@@ -18,6 +18,10 @@ def main():
     parser = argparse.ArgumentParser(description="Copy my Orgmode tasks to Google Tasks, removing all existing Google tasks.", 
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)  # Use capital, period, add default values
     
+    # Required arguments:
+    parser.add_argument("fileName",  type=str, help="name of the orgmode agenda file to process")
+    parser.add_argument("matchYear", type=int, help="entries matching this year will be archived")
+    
     # Mutually exclusive group:
     group  = parser.add_mutually_exclusive_group()
     group.add_argument("-v", "--verbose", action="store_true", help="produce progress output (e.g. for debugging)")   # Use lower case
@@ -26,27 +30,13 @@ def main():
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
     
-    # Get my home directory:
-    # from pathlib import Path
-    # home = str(Path.home())
+    process_file(args.fileName, args.matchYear, args.verbose)  # ISSUE: multiple tags in Python set, variable order!!!
     
-    # Process Email.org:
-    # process_file(home+'/.org/Email.org', args.verbose)  
-    # process_file(home+'/.org/HAN.org', args.verbose)  # ISSUE: multiple tags in Python set, variable order!!!
-    process_file('HAN.org', args.verbose)  # ISSUE: multiple tags in Python set, variable order!!!
-    
-    # Process Hack.org:
-    # process_file(home+'/.org/Hack.org', args.verbose)
-    # process_file(home+'/.org/Priv.org', args.verbose)
-    # process_file(home+'/.org/RU.org', args.verbose)
-    # process_file(home+'/.org/Sky.org', args.verbose)
-    # process_file(home+'/.org/GitHub.org', args.verbose)
-    
-    
+    return
     
 
 
-def process_file(orgFile, verbose):
+def process_file(orgFile, matchYear, verbose):
     """Process Orgmode file with three levels of nodes.
     
     Args:
@@ -54,41 +44,67 @@ def process_file(orgFile, verbose):
       verbose (bool):  verbosity flag (optional, default = False)
     """
     
+    # Read input file:
     org = op.load(orgFile)
+
+    # Generate names for output file and open them:
+    keepFileName = orgFile.replace(".org","")+"-cleaned.org"
+    archFileName = orgFile.replace(".org","")+"-archive-"+str(matchYear)+".org"
     
+    try:
+        keepFile = open(keepFileName, mode='x')  # Open to write
+    except Exception as e:
+        print('Error opening file '+str(e))
+        exit(1)
+    try:
+        archFile = open(archFileName, mode='x')  # Open to write
+    except Exception as e:
+        print('Error opening file '+str(e))
+        exit(1)
+        
+    print("Any entries from the year "+str(matchYear)+" will be archived in "+archFileName+",")
+    print("all other entries will be kept in "+keepFileName)
+    # exit()
+    
+    
+    # Walk through a maximum of five levels of nodes:
     for node1 in org.children:
-        process_headings(node1, verbose)
+        process_headings(node1, matchYear, keepFile,archFile, verbose)
         
         for node2 in node1.children:
-            process_headings(node2, verbose)
+            process_headings(node2, matchYear, keepFile,archFile, verbose)
             
             for node3 in node2.children:
-                process_headings(node3, verbose)
+                process_headings(node3, matchYear, keepFile,archFile, verbose)
                 
                 for node4 in node3.children:
-                    process_headings(node4, verbose)
+                    process_headings(node4, matchYear, keepFile,archFile, verbose)
                     
                     for node5 in node4.children:
-                        process_headings(node5, verbose)
-                    
+                        process_headings(node5, matchYear, keepFile,archFile, verbose)
+
+
+    # Close output files:
+    keepFile.close()
+    archFile.close()
+    
     return
 
 
 
-def process_headings(node, verbose):
+def process_headings(node, matchYear, keepFile,archFile, verbose):
     """Copy the Orgmode headings of a node to Google Tasks"""
-
+    
     # Issue: empty headings are lost!
-    if(len(node)>1): print(node)
+    if(len(node)>1):
+        keepFile.write(str(node)+"\n")
+        archFile.write(str(node)+"\n")
+        # print(node)
+        
     if(len(node) != len(node.children) + 1): return
     
     # Loop over headings in this node:
     for head in node.children:
-        
-        # if( (not head.scheduled) and (not head.closed) and (not head.clock) and (not head.deadline) ):
-        # has_date(): has .scheduled, .deadline, .datelist or .rangelist.
-        # if( (not head.has_date()) and (not head.closed) and (not head.clock) ):
-        #     print(head)
         
         year = None
         if(head.datelist):
@@ -99,17 +115,23 @@ def process_headings(node, verbose):
             year = head.scheduled.start.year
         elif(head.deadline):
             year = head.deadline.start.year
-        elif(head.closed):
-            year = head.closed.start.year
         elif(head.clock):
             year = head.clock[0].start.year
+        elif(head.closed):
+            year = head.closed.start.year
             
-        if(not year):
-            print(head)
-        elif(year < 2021):
-            print(head)
+        if(not year):                       # No date present, keep this entry
+            # print(head)
+            keepFile.write(str(head)+"\n")
+        elif(year == matchYear):            # Date present, and matches: archive
+            # print(head)
+            archFile.write(str(head)+"\n")
+        else:                               # Date present, but no match: keep
+            keepFile.write(str(head)+"\n")
             
+    return
 
+        
 # ### Main ###
 if __name__=="__main__": main()
 
