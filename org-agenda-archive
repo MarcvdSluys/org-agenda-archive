@@ -1,22 +1,22 @@
-#!/bin/env python3
+#!/bin/env python
 
-""" Convert the tasks from an Orgmode agenda file to Google Tasks.
+"""Archive orgmode agenda items for a certain year.
 
-    2020-05-08, MvdS:  initial version, adapted from org2gtasks.py.
+   Store them in a different file with the same headings tree structure, and keep the rest in a third
+   (cleaned) file.  Most work is done by the argparse package.
+
 """
 
 # PYTHON_ARGCOMPLETE_OK
 import argparse
 import argcomplete
-
-# from orgparse import load, loads
 import orgparse as op
 
 
 
 def main():
     # Parse command-line arguments:
-    parser = argparse.ArgumentParser(description="Copy my Orgmode tasks to Google Tasks, removing all existing Google tasks.", 
+    parser = argparse.ArgumentParser(description="Archive orgmode agenda items for a certain year.", 
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)  # Use capital, period, add default values
     
     # Required arguments:
@@ -43,11 +43,10 @@ def main():
 
 
 def process_file(orgFile):
-    """Process Orgmode file with three levels of nodes.
+    """Process an Orgmode file with up to five levels of nodes.
     
     Args:
       orgFile (str):   Orgmode file name
-      verbose (bool):  verbosity flag (optional, default = False)
     """
     
     # Read input file:
@@ -56,11 +55,11 @@ def process_file(orgFile):
     except Exception as e:
         print('Error opening file '+str(e))
         exit(1)
-
+        
     # Generate names for output file and open them:
     keepFileName = orgFile.replace(".org","")+"-cleaned-"+str(matchYear)+".org"
     archFileName = orgFile.replace(".org","")+"-archive-"+str(matchYear)+".org"
-
+    
     global keepFile, archFile
     
     try:
@@ -77,7 +76,7 @@ def process_file(orgFile):
         
     print("Any entries from the year "+str(matchYear)+" will be archived in "+archFileName+",")
     print("all other entries will be kept in "+keepFileName)
-    # exit()
+    
     
     # Create counters:
     global cntSec, cntKeep, cntArch
@@ -98,8 +97,8 @@ def process_file(orgFile):
                     
                     for node5 in node4.children:
                         process_headings(node5)
-
-
+    
+    
     # Close output files:
     keepFile.close()
     archFile.close()
@@ -113,7 +112,12 @@ def process_file(orgFile):
 
 
 def process_headings(node):
-    """Copy the Orgmode headings of a node to Google Tasks"""
+    """Copy the Orgmode headings of a node to either the archive file or the clean file.
+    
+    Parameters:
+      node:  Orgmode node.
+    
+    """
     
     global cntSec, cntKeep, cntArch
     cntSec += 1
