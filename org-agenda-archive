@@ -90,7 +90,7 @@ def process_file(orgFile):
         exit(1)
         
     print("Any entries from the year "+str(matchYear)+" will be archived in "+archFileName+",")
-    print("all other entries will be kept in "+keepFileName)
+    print("all other entries will be kept in "+keepFileName+"\n")
     
     
     # Create counters:
