@@ -22,7 +22,7 @@ My headings tree looks something like this:
 ```
 
 This allows me to view clocked time per project or class, but also for all research or teaching, or simply all
-work.  keeping this structure in my archive files allows me to do the same for ancient times if necessary.
+work.  Keeping this structure in my archive files allows me to do the same for ancient times if necessary.
 
 
 ## Example use ##
@@ -70,6 +70,7 @@ Entries kept in Work-cleaned-2019.org:   617
 
 ### How to thank me ###
 
+In order of increasing gratitude:
 1. Use more open-source software for whatever it is you are doing.
 1. Contribute to other open-source-software projects.
 1. Create and publish your own open-source software package.
