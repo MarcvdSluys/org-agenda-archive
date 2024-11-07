@@ -138,35 +138,35 @@ def process_headings(node):
     cntSec += 1
     
     # Issue: empty headings are lost!
-    if(len(node)>1):
+    if len(node)>1:
         keepFile.write(str(node)+"\n")
         archFile.write(str(node)+"\n")
         # print(node)
         
-    if(len(node) != len(node.children) + 1): return
+    if len(node) != len(node.children) + 1: return
     
     # Loop over headings in this node:
     for head in node.children:
         
         year = None
-        if(head.datelist):
+        if head.datelist:
             year = head.datelist[0].start.year
-        elif(head.rangelist):
+        elif head.rangelist:
             year = head.rangelist[0].start.year
-        elif(head.scheduled):
+        elif head.scheduled:
             year = head.scheduled.start.year
-        elif(head.deadline):
+        elif head.deadline:
             year = head.deadline.start.year
-        elif(head.clock):
+        elif head.clock:
             year = head.clock[0].start.year
-        elif(head.closed):
+        elif head.closed:
             year = head.closed.start.year
             
-        if(not year):                       # No date present, keep this entry
+        if not year:                       # No date present, keep this entry
             # print(head)
             keepFile.write(str(head)+"\n")
             cntKeep += 1
-        elif(year == matchYear):            # Date present, and matches: archive
+        elif year == matchYear:            # Date present, and matches: archive
             # print(head)
             archFile.write(str(head)+"\n")
             cntArch += 1

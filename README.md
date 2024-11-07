@@ -59,13 +59,14 @@ Entries kept in Work-cleaned-2019.org:   617
 
 * Any information outside (i.e. before) the header tree is lost.
 * If the last section is empty, it is lost.
+* If an entry spans multiple years, e.g. weekly meetings for last and this year, it will be removed completely.
 
 
 ## Author and licence ##
 
-* Author: Marc van der Sluys
-* Contact: http://marc.vandersluys.nl
-* Licence: [GPLv3+](https://www.gnu.org/licenses/gpl.html)
+* Copyright: 2020, Marc van der Sluys
+* Contact:   https://marc.vandersluys.nl
+* Licence:   [GPLv3+](https://www.gnu.org/licenses/gpl.html)
 
 
 ### How to thank me ###
