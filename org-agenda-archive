@@ -37,34 +37,6 @@ def main():
     return
     
 
-def get_cli_arguments():
-    """Get the command-line arguments.
-    
-    Returns:
-      (struct):  Struct containing command-line arguments.
-    """
-    
-    # Parse command-line arguments:
-    parser = argparse.ArgumentParser(description="Archive orgmode agenda items for a certain year.", 
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)  # Use capital, period, add default values
-    
-    # Required arguments:
-    parser.add_argument("fileName",  type=str, help="name of the orgmode agenda file to process")
-    parser.add_argument("matchYear", type=int, help="entries matching this year will be archived")
-    
-    # Mutually exclusive group:
-    group  = parser.add_mutually_exclusive_group()
-    group.add_argument('-v', '--verbosity', action='count', default=1, help='increase output verbosity')  # Counts number of occurrences
-    group.add_argument("-q", "--quiet",   action="store_true", help="produce no (error) output (e.g. for cron job)")  # False by default
-    
-    argcomplete.autocomplete(parser)
-    args = parser.parse_args()
-    
-    if args.quiet: args.verbosity=0
-    
-    return args
-    
-
 def process_file(args):
     """Process an Orgmode file with up to five levels of nodes.
     
@@ -185,6 +157,34 @@ def process_headings(args, node):
     return
 
         
+def get_cli_arguments():
+    """Get the command-line arguments.
+    
+    Returns:
+      (struct):  Struct containing command-line arguments.
+    """
+    
+    # Parse command-line arguments:
+    parser = argparse.ArgumentParser(description="Archive orgmode agenda items for a certain year.", 
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)  # Use capital, period, add default values
+    
+    # Required arguments:
+    parser.add_argument("fileName",  type=str, help="name of the orgmode agenda file to process")
+    parser.add_argument("matchYear", type=int, help="entries matching this year will be archived")
+    
+    # Mutually exclusive group:
+    group  = parser.add_mutually_exclusive_group()
+    group.add_argument('-v', '--verbosity', action='count', default=1, help='increase output verbosity')  # Counts number of occurrences
+    group.add_argument("-q", "--quiet",   action="store_true", help="produce no (error) output (e.g. for cron job)")  # False by default
+    
+    argcomplete.autocomplete(parser)
+    args = parser.parse_args()
+    
+    if args.quiet: args.verbosity=0
+    
+    return args
+    
+
 # ### Main ###
 if __name__=="__main__": main()
 
