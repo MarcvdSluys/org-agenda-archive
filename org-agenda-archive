@@ -1,6 +1,8 @@
 #!/bin/env python
+# PYTHON_ARGCOMPLETE_OK
+# -*- coding: utf-8 -*-
 
-#  Copyright (c) 2020  Marc van der Sluys - marc.vandersluys.nl
+#  Copyright (c) 2020-2024  Marc van der Sluys - marc.vandersluys.nl
 #   
 #  This file is part of the org-agenda-archive Python package, containing a Python module to archive entries
 #  from your emacs orgmode agenda.  See: https://github.com/MarcvdSluys/org-agenda-archive
@@ -21,7 +23,9 @@
    (cleaned) file.  Most work is done by the argparse package.
 """
 
-# PYTHON_ARGCOMPLETE_OK
+import colored_traceback
+colored_traceback.add_hook()
+
 import argparse
 import argcomplete
 import orgparse as op
