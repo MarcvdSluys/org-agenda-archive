@@ -19,7 +19,6 @@
 
    Store them in a different file with the same headings tree structure, and keep the rest in a third
    (cleaned) file.  Most work is done by the argparse package.
-
 """
 
 # PYTHON_ARGCOMPLETE_OK
@@ -33,12 +32,7 @@ def main():
 
     args = get_cli_arguments()
     
-    # Arguments -> global variables
-    global verbosity, matchYear
-    verbosity = args.verbosity
-    matchYear = args.matchYear
-    
-    process_file(args.fileName)  # ISSUE: multiple tags in Python set, variable order!!!
+    process_file(args)  # ISSUE: multiple tags in Python set, variable order!!!
     
     return
     
@@ -71,23 +65,23 @@ def get_cli_arguments():
     return args
     
 
-def process_file(orgFile):
+def process_file(args):
     """Process an Orgmode file with up to five levels of nodes.
     
-    Args:
-      orgFile (str):   Orgmode file name
+    Parameters:
+      args (stuct):   cli arguments
     """
     
     # Read input file:
     try:
-        org = op.load(orgFile)
+        org = op.load(args.fileName)
     except Exception as e:
         print('Error opening file '+str(e))
         exit(1)
         
     # Generate names for output file and open them:
-    keepFileName = orgFile.replace(".org","")+"-cleaned-"+str(matchYear)+".org"
-    archFileName = orgFile.replace(".org","")+"-archive-"+str(matchYear)+".org"
+    keepFileName = args.fileName.replace(".org","")+"-cleaned-"+str(args.matchYear)+".org"
+    archFileName = args.fileName.replace(".org","")+"-archive-"+str(args.matchYear)+".org"
     
     global keepFile, archFile
     
@@ -103,7 +97,7 @@ def process_file(orgFile):
         print('Error opening file '+str(e))
         exit(1)
         
-    print("Any entries from the year "+str(matchYear)+" will be archived in "+archFileName+",")
+    print("Any entries from the year "+str(args.matchYear)+" will be archived in "+archFileName+",")
     print("all other entries will be kept in "+keepFileName+"\n")
     
     
@@ -113,26 +107,26 @@ def process_file(orgFile):
     
     # Walk through a maximum of five levels of nodes:
     for node1 in org.children:
-        process_headings(node1)
+        process_headings(args, node1)
         
         for node2 in node1.children:
-            process_headings(node2)
+            process_headings(args, node2)
             
             for node3 in node2.children:
-                process_headings(node3)
+                process_headings(args, node3)
                 
                 for node4 in node3.children:
-                    process_headings(node4)
+                    process_headings(args, node4)
                     
                     for node5 in node4.children:
-                        process_headings(node5)
+                        process_headings(args, node5)
     
     
     # Close output files:
     keepFile.close()
     archFile.close()
     
-    print("Sections found in "+orgFile+":   ", cntSec-cntArch-cntKeep)
+    print("Sections found in "+args.fileName+":   ", cntSec-cntArch-cntKeep)
     print("Entries archived in "+archFileName+":  ", cntArch)
     print("Entries kept in "+keepFileName+":  ", cntKeep)
     
@@ -140,12 +134,12 @@ def process_file(orgFile):
 
 
 
-def process_headings(node):
+def process_headings(args, node):
     """Copy the Orgmode headings of a node to either the archive file or the clean file.
     
     Parameters:
+      args (stuct):   cli arguments
       node:  Orgmode node.
-    
     """
     
     global cntSec, cntKeep, cntArch
@@ -180,7 +174,7 @@ def process_headings(node):
             # print(head)
             keepFile.write(str(head)+"\n")
             cntKeep += 1
-        elif year == matchYear:            # Date present, and matches: archive
+        elif year == args.matchYear:            # Date present, and matches: archive
             # print(head)
             archFile.write(str(head)+"\n")
             cntArch += 1
