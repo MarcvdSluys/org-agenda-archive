@@ -132,19 +132,36 @@ def process_headings(args, node):
     # Loop over headings in this node:
     for head in node.children:
         
+        if args.verbosity > 2:  
+            if head.datelist:   print('Year from datelist: ',  head.datelist[0].start.year)
+            if args.verbosity > 3:  print('Datelist: ', head.datelist)
+            if head.rangelist:  print('Year from rangelist: ', head.rangelist[0].start.year)
+            if args.verbosity > 3:  print('Rangelist: ', head.rangelist)
+            if head.scheduled:  print('Year from scheduled: ', head.scheduled.start.year)
+            if head.deadline:   print('Year from deadline: ',  head.deadline.start.year)
+            if head.clock:      print('Year from clock: ',     head.clock[0].start.year)
+            if args.verbosity > 3:  print('Clock: ', head.clock)
+            if head.closed:     print('Year from closed: ',    head.closed.start.year)
+            
         year = None
         if head.datelist:
             year = head.datelist[0].start.year
+            if args.verbosity > 1:  print('Get year from datelist')
         elif head.rangelist:
             year = head.rangelist[0].start.year
+            if args.verbosity > 1:  print('Get year from rangelist')
         elif head.scheduled:
             year = head.scheduled.start.year
+            if args.verbosity > 1:  print('Get year from scheduled')
         elif head.deadline:
             year = head.deadline.start.year
+            if args.verbosity > 1:  print('Get year from deadline')
         elif head.clock:
             year = head.clock[0].start.year
+            if args.verbosity > 1:  print('Get year from clock')
         elif head.closed:
             year = head.closed.start.year
+            if args.verbosity > 1:  print('Get year from closed')
             
         if not year:                       # No date present, keep this entry
             # print(head)
@@ -158,6 +175,8 @@ def process_headings(args, node):
             keepFile.write(str(head)+"\n")
             cntKeep += 1
             
+        if args.verbosity > 1:  print()
+        
     return
 
         
