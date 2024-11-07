@@ -1,9 +1,11 @@
 # org-agenda-archive #
 
 A command-line tool written in Python to archive your emacs orgmode agenda items for a certain year.  Most
-work is done by the [orgparse](https://github.com/karlicoss/orgparse) package by Karlicoss.  The selected
-items are archived in a different file with the same headings tree structure.  The rest are kept in a third
-(cleaned) file.  The program will refuse to overwrite any files.
+work is done by the [orgparse](https://github.com/karlicoss/orgparse) package by Karlicoss.  Entries for which
+the NEWEST year matches the target year are archived in a different file with the same headings tree
+structure.  For example, an entry labelled as created in 2021 but with clock times and closed in 2022 will be
+archived if 2022 is the target year, but NOT if 2021 is the target.  The rest are kept in a third (cleaned)
+file.  The program will refuse to overwrite any files.
 
 My headings tree looks something like this:
 ```orgmode
@@ -57,9 +59,9 @@ Entries kept in Work-cleaned-2019.org:   617
 
 ## Known bugs ##
 
-* Any information outside (i.e. before) the header tree is lost.
+* Any information outside (i.e. before) the header tree is lost.  Think of titles, filetags, categories and
+  sundry notes.
 * If the last section is empty, it is lost.
-* If an entry spans multiple years, e.g. weekly meetings for last and this year, it will be removed completely.
 
 
 ## Author and licence ##

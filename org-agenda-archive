@@ -19,8 +19,11 @@
 
 """Archive emacs orgmode agenda items for a certain year.
 
-   Store them in a different file with the same headings tree structure, and keep the rest in a third
-   (cleaned) file.  Most work is done by the argparse package.
+   Store entries for which the NEWEST year matches the target year in a different file with the same headings
+   tree structure, and keep the rest in a third (cleaned) file.  For example, an entry labelled as created in
+   2021 but with clock times and closed in 2022 will be archived if 2022 is the target year, but NOT if 2021
+   is the target.  Most work in this code is done by Karlicoss' orgparse package.
+
 """
 
 import colored_traceback
@@ -36,7 +39,7 @@ def main():
 
     args = get_cli_arguments()
     
-    process_file(args)  # ISSUE: multiple tags in Python set, variable order!!!
+    process_file(args)
     
     return
     
@@ -46,6 +49,9 @@ def process_file(args):
     
     Parameters:
       args (stuct):   cli arguments
+    
+    ISSUE:
+      - multiple tags in Python set, variable order!
     """
     
     # Read input file:
@@ -73,8 +79,9 @@ def process_file(args):
         print('Error opening file '+str(e))
         exit(1)
         
-    print("Any entries from the year "+str(args.matchYear)+" will be archived in "+archFileName+",")
-    print("all other entries will be kept in "+keepFileName+"\n")
+    if args.verbosity>0:
+        print("Any entries from the year "+str(args.matchYear)+" will be archived in "+archFileName+",")
+        print("all other entries will be kept in "+keepFileName+"\n")
     
     
     # Create counters:
@@ -102,9 +109,10 @@ def process_file(args):
     keepFile.close()
     archFile.close()
     
-    print("Sections found in "+args.fileName+":   ", cntSec-cntArch-cntKeep)
-    print("Entries archived in "+archFileName+":  ", cntArch)
-    print("Entries kept in "+keepFileName+":  ", cntKeep)
+    if args.verbosity>0:
+        print("Sections found in "+args.fileName+":   ", cntSec-cntArch-cntKeep)
+        print("Entries archived in "+archFileName+":  ", cntArch)
+        print("Entries kept in "+keepFileName+":  ", cntKeep)
     
     return
 
@@ -132,46 +140,44 @@ def process_headings(args, node):
     # Loop over headings in this node:
     for head in node.children:
         
-        if args.verbosity > 2:  
-            if head.datelist:   print('Year from datelist: ',  head.datelist[0].start.year)
-            if args.verbosity > 3:  print('Datelist: ', head.datelist)
-            if head.rangelist:  print('Year from rangelist: ', head.rangelist[0].start.year)
-            if args.verbosity > 3:  print('Rangelist: ', head.rangelist)
-            if head.scheduled:  print('Year from scheduled: ', head.scheduled.start.year)
-            if head.deadline:   print('Year from deadline: ',  head.deadline.start.year)
-            if head.clock:      print('Year from clock: ',     head.clock[0].start.year)
-            if args.verbosity > 3:  print('Clock: ', head.clock)
-            if head.closed:     print('Year from closed: ',    head.closed.start.year)
-            
-        year = None
+        if args.verbosity > 4:  print(head)
+        
+        yearmax = 0
         if head.datelist:
-            year = head.datelist[0].start.year
-            if args.verbosity > 1:  print('Get year from datelist')
-        elif head.rangelist:
-            year = head.rangelist[0].start.year
-            if args.verbosity > 1:  print('Get year from rangelist')
-        elif head.scheduled:
-            year = head.scheduled.start.year
-            if args.verbosity > 1:  print('Get year from scheduled')
-        elif head.deadline:
-            year = head.deadline.start.year
-            if args.verbosity > 1:  print('Get year from deadline')
-        elif head.clock:
-            year = head.clock[0].start.year
-            if args.verbosity > 1:  print('Get year from clock')
-        elif head.closed:
-            year = head.closed.start.year
-            if args.verbosity > 1:  print('Get year from closed')
-            
-        if not year:                       # No date present, keep this entry
-            # print(head)
+            yearmax = max(yearmax, head.datelist[0].start.year, head.datelist[-1].start.year)
+            if args.verbosity > 3:  print('Datelist: ', head.datelist)
+            if args.verbosity > 2:  print('Years from datelist:  ', head.datelist[-1].start.year, '-', head.datelist[0].start.year)  # Rev. chron. order?
+        if head.rangelist:
+            yearmax = max(yearmax, head.rangelist[0].start.year, head.rangelist[-1].start.year)
+            if args.verbosity > 3:  print('Rangelist: ', head.rangelist)
+            if args.verbosity > 2:  print('Years from rangelist: ', head.rangelist[-1].start.year, '-', head.rangelist[0].start.year)  # Rev. chron. order?
+        if head.scheduled:
+            yearmax = max(yearmax, head.scheduled.start.year)
+            if args.verbosity > 2:  print('Year from scheduled:  ', head.scheduled.start.year)
+        if head.deadline:
+            yearmax = max(yearmax, head.deadline.start.year)
+            if args.verbosity > 2:  print('Year from deadline:   ', head.deadline.start.year)
+        if head.clock:
+            yearmax = max(yearmax, head.clock[0].start.year, head.clock[-1].start.year)
+            if args.verbosity > 3:  print('Clock: ', head.clock)
+            if args.verbosity > 2:  print('Years from clock:     ', head.clock[-1].start.year, '-', head.clock[0].start.year)  # Rev. chron. order?
+        if head.closed:
+            yearmax = max(yearmax, head.closed.start.year)
+            if args.verbosity > 2:  print('Year from closed:     ', head.closed.start.year)
+        
+        
+        if args.verbosity > 1:      print('matchYear, yearmax:   ', args.matchYear, '/', yearmax)
+        
+        if yearmax==0:                      # No date present, keep this entry
+            if args.verbosity > 1:      print('matchYear, yearmax:   ', args.matchYear, '/', yearmax, ' - keeping')
             keepFile.write(str(head)+"\n")
             cntKeep += 1
-        elif year == args.matchYear:            # Date present, and matches: archive
-            # print(head)
+        elif yearmax == args.matchYear:         # Date present, and matches: archive
+            if args.verbosity > 1:      print('matchYear, yearmax:   ', args.matchYear, '/', yearmax, ' - archiving')
             archFile.write(str(head)+"\n")
             cntArch += 1
-        else:                               # Date present, but no match: keep
+        else:                                   # Date present, but no match: keep
+            if args.verbosity > 1:      print('matchYear, yearmax:   ', args.matchYear, '/', yearmax, ' - keeping')
             keepFile.write(str(head)+"\n")
             cntKeep += 1
             
