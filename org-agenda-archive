@@ -88,6 +88,10 @@ def process_file(args):
     global cntSec, cntKeep, cntArch
     cntSec = cntKeep = cntArch = 0
     
+    # Write file header (before first section) to both files:
+    keepFile.write(str(org)+"\n")
+    archFile.write(str(org)+"\n")
+    
     # Walk through a maximum of five levels of nodes:
     for node1 in org.children:
         process_headings(args, node1)

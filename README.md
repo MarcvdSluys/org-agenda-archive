@@ -59,14 +59,13 @@ Entries kept in Work-cleaned-2019.org:   617
 
 ## Known bugs ##
 
-* Any information outside (i.e. before) the header tree is lost.  Think of titles, filetags, categories and
-  sundry notes.
-* If the last section is empty, it is lost.
+* If the last section (level 1) is empty, it is lost.
+* Any empty subsection (level 2) is lost?
 
 
 ## Author and licence ##
 
-* Copyright: 2020, Marc van der Sluys
+* Copyright: 2020-2024, Marc van der Sluys
 * Contact:   https://marc.vandersluys.nl
 * Licence:   [GPLv3+](https://www.gnu.org/licenses/gpl.html)
 
